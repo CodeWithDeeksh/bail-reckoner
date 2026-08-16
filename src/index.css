@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #05070c;
+  --color-navy: #0a1120;
+  --color-navy-light: #10192e;
+  --color-navy-lighter: #16223d;
+  --color-cyan: #4fd6e8;
+  --color-cyan-dim: #2a8fa3;
+  --color-gold: #c9a24b;
+  --color-gold-dim: #8a7238;
+  --color-paper: #f2f4f8;
+  --color-paper-dim: #a9b2c3;
+  --color-line: rgba(242, 244, 248, 0.09);
+  --color-line-strong: rgba(242, 244, 248, 0.16);
+  --color-good: #52c98c;
+  --color-warn: #e0a940;
+  --color-alert: #e2685c;
+
+  --font-display: "Fraunces", "Source Serif 4", Georgia, serif;
+  --font-body: "IBM Plex Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-cyan);
+  color: var(--color-ink);
+}
+
+.grid-field {
+  background-image:
+    linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: grid-drift 40s linear infinite;
+}
+
+@keyframes grid-drift {
+  from {
+    background-position: 0px 0px;
+  }
+  to {
+    background-position: 48px 96px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-field {
+    animation: none;
+  }
+}
+
+.glass-panel {
+  background: rgba(16, 25, 46, 0.55);
+  border: 1px solid var(--color-line);
+  backdrop-filter: blur(14px);
+}
+
+.gold-rule {
+  border-color: var(--color-gold-dim);
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.flow-line {
+  stroke-dasharray: 4 6;
+  animation: dash-flow 1.2s linear infinite;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-navy-lighter);
+  border-radius: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}

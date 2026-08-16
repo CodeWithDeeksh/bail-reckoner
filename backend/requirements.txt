@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+sqlmodel>=0.0.22
+pydantic>=2.9
+pyjwt>=2.9
+passlib[bcrypt]>=1.7
+bcrypt<4.1
