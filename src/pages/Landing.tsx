@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, Scale, UserRound, Landmark, ShieldCheck } from "lucide-react";
+import { useLanguage } from "../i18n/language";
 
 const NARRATIVE = [
   {
@@ -48,24 +49,26 @@ const NARRATIVE = [
   },
 ];
 
-const USERS = [
-  { icon: UserRound, label: "Undertrial", detail: "Understands the pathway that may apply to their case and what is still needed." },
-  { icon: Scale, label: "Legal Aid", detail: "Triages a caseload quickly with a documented, explainable basis for each flag." },
-  { icon: Landmark, label: "Judiciary", detail: "Reviews the statutory calculation behind a flag before applying judicial discretion." },
-];
-
 export default function Landing() {
+  const { t } = useLanguage();
+
+  const users = [
+    { icon: UserRound, label: t("undertrial"), detail: t("undertrialDetail") },
+    { icon: Scale, label: t("legalAid"), detail: t("legalAidDetail") },
+    { icon: Landmark, label: t("judiciary"), detail: t("judiciaryDetail") },
+  ];
+
   return (
     <div>
-      <Hero />
-      <ScrollNarrative />
+      <Hero t={t} />
+      <ScrollNarrative t={t} />
 
       {/* USERS */}
       <section className="border-b border-line px-6 py-20 lg:px-10">
         <div className="mx-auto max-w-7xl">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">Who this serves</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">{t("serves")}</p>
           <div className="mt-8 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">
-            {USERS.map((u, i) => (
+            {users.map((u, i) => (
               <motion.div
                 key={u.label}
                 initial={{ opacity: 0, y: 12 }}
@@ -88,14 +91,10 @@ export default function Landing() {
         <div className="mx-auto max-w-3xl text-center">
           <ShieldCheck size={22} className="mx-auto text-gold" strokeWidth={1.5} />
           <p className="mt-6 font-display text-2xl leading-snug text-paper sm:text-3xl">
-            Not a bail-granting system. Not a judicial prediction system.
-            <br />A decision-support layer.
+            {t("positioning")}
           </p>
           <p className="mt-6 text-sm leading-relaxed text-paper-dim">
-            Bail Reckoner identifies potential statutory and procedural pathways from structured
-            case information and explains exactly why a case is flagged. It does not predict
-            outcomes, assign confidence scores, or grant bail. All data in this prototype is
-            synthetic.
+            {t("positioningBody")}
           </p>
         </div>
       </section>
@@ -103,13 +102,13 @@ export default function Landing() {
   );
 }
 
-function Hero() {
+function Hero({ t }: { t: (key: string) => string }) {
   return (
     <section className="grid-field relative overflow-hidden border-b border-line px-6 pb-20 pt-20 lg:px-10 lg:pt-28">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-ink" />
       <div className="relative mx-auto max-w-7xl">
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="font-mono text-xs uppercase tracking-[0.2em] text-cyan">
-          Ministry of Law &amp; Justice — Smart India Hackathon 2026 — SIH260405
+          {t("ministry")}
         </motion.p>
 
         <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="mt-6 font-display text-6xl font-medium leading-[0.95] text-paper sm:text-7xl lg:text-8xl">
@@ -119,21 +118,20 @@ function Hero() {
         </motion.h1>
 
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="mt-8 max-w-xl font-display text-2xl italic leading-snug text-paper-dim">
-          Know the pathway. Understand the reason. Act on time.
+          {t("heroTagline")}
         </motion.p>
 
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="mt-4 max-w-xl text-paper-dim">
-          An explainable legal decision-support system for undertrial prisoners, legal-aid
-          providers and judicial authorities.
+          {t("heroBody")}
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.4 }} className="mt-10 flex flex-wrap items-center gap-4">
           <Link to="/analyze" className="group flex items-center gap-2 bg-cyan px-6 py-3 font-mono text-xs uppercase tracking-[0.14em] text-ink transition-transform hover:-translate-y-0.5">
-            Analyze a Case
+            {t("analyze")}
             <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <a href="#how-it-works" className="border border-line-strong px-6 py-3 font-mono text-xs uppercase tracking-[0.14em] text-paper-dim transition-colors hover:border-cyan-dim hover:text-paper">
-            Explore How It Works
+            {t("explore")}
           </a>
         </motion.div>
       </div>
@@ -141,17 +139,17 @@ function Hero() {
   );
 }
 
-function ScrollNarrative() {
+function ScrollNarrative({ t }: { t: (key: string) => string }) {
   const ref = useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
   return (
-    <section id="how-it-works" ref={ref} className="relative border-b border-line px-6 py-4 lg:px-10">
+    <section id="how-it-works" ref={ref} className="relative border-b border-line px-6 py-4 lg:px-10 scroll-mt-20">
       <div className="mx-auto flex max-w-7xl flex-col gap-10 lg:flex-row lg:gap-16">
         {/* PINNED STAGE RAIL */}
         <div className="top-24 h-max shrink-0 lg:sticky lg:w-56">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">How it works</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-gold">{t("how")}</p>
           <div className="relative mt-6 space-y-5 pl-5">
             <div className="absolute bottom-2 left-[3px] top-2 w-px bg-line-strong" />
             {!prefersReducedMotion && (

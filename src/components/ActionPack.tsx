@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileText, X } from "lucide-react";
+import { FileText, X, Printer } from "lucide-react";
 import type { Case, EligibilityResult } from "../types";
 import { RESULT_CATEGORY_LABEL } from "../types";
+import { printActionPack } from "../lib/pdf";
 
 export default function ActionPack({ c, result }: { c: Case; result: EligibilityResult }) {
   const [open, setOpen] = useState(false);
@@ -53,9 +54,17 @@ export default function ActionPack({ c, result }: { c: Case; result: Eligibility
                   </span>
                   <h2 className="mt-2 font-display text-2xl text-paper">Action Pack — Case #{c.caseId}</h2>
                 </div>
-                <button onClick={() => setOpen(false)} aria-label="Close" className="text-paper-dim hover:text-paper">
-                  <X size={18} />
-                </button>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    onClick={() => printActionPack(c, result)}
+                    className="flex items-center gap-1.5 border border-cyan-dim px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-cyan hover:bg-cyan hover:text-ink"
+                  >
+                    <Printer size={13} /> Download PDF
+                  </button>
+                  <button onClick={() => setOpen(false)} aria-label="Close" className="text-paper-dim hover:text-paper">
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-8 space-y-6 text-sm leading-relaxed text-paper">

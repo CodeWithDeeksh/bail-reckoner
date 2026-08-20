@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Case, Charge, YesNoUnknown, Compoundability } from "../types";
-import { DEMO_CASES } from "../data/demoCases";
+import { DEMO_CASES, DEMO_CASE_GROUPS } from "../data/demoCases";
 import { useCaseStore } from "../store/caseStore";
 import { useAuth } from "../store/authContext";
 import ProcessingOverlay from "../components/ProcessingOverlay";
 import RuleEvaluationTimeline from "../components/RuleEvaluationTimeline";
+import { validateCase, type ValidationError } from "../lib/validation";
 
 const STEPS = ["Case ID", "Charges", "Custody", "Offender & Cases", "Procedural", "Review"];
 
@@ -89,6 +90,7 @@ export default function CaseAnalyzer() {
   const [caseId] = useState(() => makeCaseId());
   const [c, setC] = useState<Case>(() => emptyCase(caseId));
   const [processing, setProcessing] = useState(false);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
 
   function loadDemo(demoId: string) {
     const demo = DEMO_CASES.find((d) => d.caseId === demoId);
@@ -114,6 +116,12 @@ export default function CaseAnalyzer() {
   }
 
   function runAnalysis() {
+    const validationErrors = validateCase(c);
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors([]);
     setProcessing(true);
   }
 
@@ -149,18 +157,26 @@ export default function CaseAnalyzer() {
             Synthetic Demo Data
           </span>
           <select
-            className="border border-line-strong bg-navy px-3 py-2 text-xs text-paper-dim outline-none focus:border-cyan"
+            className="max-w-[240px] border border-line-strong bg-navy px-3 py-2 text-xs text-paper-dim outline-none focus:border-cyan"
             defaultValue=""
             onChange={(e) => e.target.value && loadDemo(e.target.value)}
             aria-label="Load a synthetic demo case"
           >
             <option value="" disabled>
-              Load demo case…
+              Load demo case… ({DEMO_CASES.length} available)
             </option>
-            {DEMO_CASES.map((d) => (
-              <option key={d.caseId} value={d.caseId}>
-                {d.caseId} — {d.person.displayId}
-              </option>
+            {DEMO_CASE_GROUPS.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.caseIds.map((id) => {
+                  const d = DEMO_CASES.find((c) => c.caseId === id);
+                  if (!d) return null;
+                  return (
+                    <option key={id} value={id}>
+                      {id} — {d.person.displayId}
+                    </option>
+                  );
+                })}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -439,6 +455,16 @@ export default function CaseAnalyzer() {
                 <SummaryRow label="Court / Stage" value={`${c.status.currentCourt || "—"} · ${c.status.caseStage || "—"}`} />
                 <SummaryRow label="Flags" value={c.status.specialConditionFlags.join(", ") || "None recorded"} />
               </div>
+              {errors.length > 0 && (
+                <div className="rounded-sm border border-alert/50 bg-alert/10 p-4">
+                  <p className="font-mono text-xs uppercase tracking-[0.1em] text-alert mb-2">Fix these errors:</p>
+                  <ul className="space-y-1 text-sm text-alert">
+                    {errors.map((err, i) => (
+                      <li key={i}>• <strong>{err.field}:</strong> {err.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <button
                 onClick={runAnalysis}
                 className="w-full bg-cyan py-4 text-center font-mono text-sm uppercase tracking-[0.14em] text-ink transition-transform hover:-translate-y-0.5"

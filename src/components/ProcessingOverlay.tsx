@@ -51,10 +51,11 @@ export default function ProcessingOverlay({ run, onSuccess, onCancel }: Props) {
   // Advance the visible stage list while a network call is in flight, but
   // never race ahead of reality — it holds at the last stage until the
   // real response arrives instead of pretending to finish early.
+  // Increased to 700ms so users have time to read each step.
   useEffect(() => {
     if (phase !== "stages") return;
     if (active >= STAGES.length - 1) return;
-    const t = setTimeout(() => setActive((a) => a + 1), prefersReducedMotion ? 0 : 260);
+    const t = setTimeout(() => setActive((a) => a + 1), prefersReducedMotion ? 0 : 700);
     return () => clearTimeout(t);
   }, [active, phase, prefersReducedMotion]);
 
@@ -67,8 +68,8 @@ export default function ProcessingOverlay({ run, onSuccess, onCancel }: Props) {
     if (res.ok) {
       setResult(res.data);
       setActive(STAGES.length);
-      setTimeout(() => setPhase("summary"), prefersReducedMotion ? 0 : 350);
-      setTimeout(() => onSuccess(res.data), prefersReducedMotion ? 200 : 1400);
+      setTimeout(() => setPhase("summary"), prefersReducedMotion ? 0 : 500);
+      setTimeout(() => onSuccess(res.data), prefersReducedMotion ? 200 : 2200);
     } else {
       setErrorMsg(res.error);
       setPhase("error");

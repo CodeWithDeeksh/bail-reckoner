@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 import { useCaseStore } from "../store/caseStore";
 import { useAuth } from "../store/authContext";
 import { RESULT_CATEGORY_LABEL, type ResultCategory, type EligibilityResult } from "../types";
 import { fetchLatestResult } from "../lib/api";
+import { downloadCsv } from "../lib/csv";
 import CountUp from "../components/CountUp";
+import { calculatePathwayDistribution, calculateOffenceDistribution, calculateThresholdStats } from "../lib/analytics";
 
 function AnimatedCount({ n, label, tone }: { n: number; label: string; tone?: string }) {
   return (
@@ -113,6 +115,76 @@ export default function Dashboard() {
         <AnimatedCount n={counts.multiCase} label="Multiple-case review" tone="text-cyan" />
       </div>
 
+      {/* ANALYTICS & INSIGHTS */}
+      <div className="mt-14">
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-paper-dim">Rule Engine Insights</p>
+        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+          {/* Pathway Distribution */}
+          <div className="glass-panel p-6">
+            <h3 className="font-mono text-xs uppercase tracking-[0.1em] text-cyan mb-4">Flagged Pathways</h3>
+            <div className="space-y-3">
+              {(() => {
+                const pathwayStats = calculatePathwayDistribution(new Map(Object.entries(results)));
+                if (pathwayStats.length === 0) {
+                  return <p className="text-xs text-paper-dim">No flagged cases yet</p>;
+                }
+                return pathwayStats.map((stat) => (
+                  <div key={stat.name} className="flex items-center justify-between">
+                    <span className="text-sm text-paper-dim">{stat.name}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-1 flex-1 max-w-[120px] bg-navy-lighter">
+                        <div className="h-full bg-cyan" style={{ width: `${stat.percentage}%` }} />
+                      </div>
+                      <span className="w-10 text-right font-mono text-xs text-paper">{stat.count}</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+
+          {/* Threshold Statistics */}
+          <div className="glass-panel p-6">
+            <h3 className="font-mono text-xs uppercase tracking-[0.1em] text-gold mb-4">Custody Threshold Stats</h3>
+            {(() => {
+              const stats = calculateThresholdStats(cases, new Map(Object.entries(results)));
+              return (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-paper-dim">Threshold Reached</p>
+                    <p className="font-mono text-2xl text-good">{stats.reachedCount}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-paper-dim">Days to Threshold (avg)</p>
+                    <p className="font-mono text-2xl text-paper">{stats.averageDaysToThreshold ?? "—"}</p>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+
+        {/* Top Charges */}
+        <div className="mt-6 glass-panel p-6">
+          <h3 className="font-mono text-xs uppercase tracking-[0.1em] text-paper-dim mb-4">Top Charges</h3>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(() => {
+              const offenceStats = calculateOffenceDistribution(cases);
+              if (offenceStats.length === 0) {
+                return <p className="text-xs text-paper-dim col-span-3">No charges yet</p>;
+              }
+              return offenceStats.map((offence) => (
+                <div key={offence.section} className="border-l-2 border-cyan-dim pl-3">
+                  <p className="font-mono text-[10px] text-cyan">{offence.section}</p>
+                  <p className="text-xs text-paper">{offence.name}</p>
+                  <p className="text-xs text-paper-dim mt-1">{offence.count} case{offence.count !== 1 ? 's' : ''}</p>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      </div>
+
       {/* WATCH LIST — cases nearest their threshold */}
       <div className="mt-14">
         <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-paper-dim">Nearest to threshold</p>
@@ -165,6 +237,29 @@ export default function Dashboard() {
             </option>
           ))}
         </select>
+        <button
+          onClick={() =>
+            downloadCsv(
+              `undertrial-watch-${new Date().toISOString().slice(0, 10)}.csv`,
+              ["Case ID", "Offence", "Rule", "Status", "Time to threshold (days)", "Priority"],
+              filtered.map(({ c, result }) => {
+                const primaryOutcome = result?.outcomes.find((o) => o.category === result.primaryCategory) ?? result?.outcomes[0];
+                const undertrial = result?.undertrial;
+                return [
+                  c.caseId,
+                  c.charges[0]?.section || "",
+                  primaryOutcome?.legalSource.section || "",
+                  result ? RESULT_CATEGORY_LABEL[result.primaryCategory] : "Not analyzed",
+                  undertrial ? (undertrial.reached ? `+${undertrial.overDays}` : `${undertrial.remainingDays}`) : "",
+                  primaryOutcome?.priority || "",
+                ];
+              })
+            )
+          }
+          className="ml-auto flex items-center gap-1.5 border border-line-strong px-3 py-2 font-mono text-[11px] uppercase tracking-[0.08em] text-paper-dim hover:border-cyan hover:text-cyan"
+        >
+          <Download size={13} /> Export CSV
+        </button>
       </div>
 
       <div className="mt-6 overflow-x-auto border border-line">

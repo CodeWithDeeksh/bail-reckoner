@@ -96,19 +96,38 @@ Next Steps`
 
 ## Demo case list
 
+**30 synthetic cases**, grouped by which pathway(s) they exercise (also how the
+"Load demo case" dropdown groups them). All verified against the live rule
+engine — zero errors across all 30 in a real bulk-analyze pass, and every
+figure below is copied from that real run, not hand-typed.
+
 | Case | Scenario | Expected result |
 |---|---|---|
-| BR-2026-001 | Bailable offence | Potentially Eligible |
-| BR-2026-002 | Default-bail timeline, chargesheet not filed | Eligibility Condition Detected — BNSS §187 |
-| BR-2026-003 | General §479 one-half threshold | Eligibility Condition Detected — BNSS §479 (73 days past threshold) |
-| BR-2026-004 | First-time offender one-third threshold | Eligibility Condition Detected — BNSS §479 (first-time) |
-| BR-2026-005 | Special statute (NDPS) | Requires Judicial Review |
-| BR-2026-006 | Multiple charges + multiple pending cases + no bail application filed | Eligibility Condition Detected **and** Procedural Action Required, with several unresolved items — the "non-trivial reasoning" case |
-| BR-2026-007 | Missing arrest date, custody dates and charges | Insufficient Information |
-
-Every one of these was run against the live backend during development and the
-figures above (e.g. "73 days past threshold" for BR-2026-003) are copied
-directly from a real API response, not hand-typed.
+| BR-2026-001, 008, 016, 018, 030 | Simple bailable offences (theft, hurt, house-breaking, mischief) | Potentially Eligible |
+| BR-2026-017 | Bailable, but first-time-offender status unknown | Potentially Eligible + data-quality flag |
+| BR-2026-025 | Bailable, but heavy judicial-discretion factors (priors, criminal history, absconding flag) | Potentially Eligible + 7 judicial factors |
+| BR-2026-002 | Default-bail (§187), chargesheet not filed, 60-day threshold | Eligibility Condition Detected, +0 days |
+| BR-2026-009 | Default-bail, severe offence (≥10y → 90-day threshold) | Eligibility Condition Detected, +5 days |
+| BR-2026-024 | Multi-charge default-bail (90-day threshold via the severe charge) | Eligibility Condition Detected, +2 days |
+| BR-2026-003 | §479 general (1/2) threshold reached | Eligibility Condition Detected, **+73 days** |
+| BR-2026-004 | §479 first-time (1/3) threshold reached | Eligibility Condition Detected, +15 days |
+| BR-2026-006 | §479 reached + multi-charge + no bail application filed | Eligibility Condition Detected **and** Procedural Action Required — the "non-trivial reasoning" case |
+| BR-2026-015 | §479 general threshold reached | Eligibility Condition Detected, +22 days |
+| BR-2026-013 | §479 first-time threshold **approaching** | Not yet eligible, 27 days remaining |
+| BR-2026-014 | §479 general threshold **approaching** | Not yet eligible, 35 days remaining |
+| BR-2026-026 | Accused-delay deduction is the deciding factor — raw custody exceeds the threshold, **net custody (after deducting delay) does not** | Not yet eligible, 5 days remaining — proves the delay-deduction logic actually runs |
+| BR-2026-027 | Accused-delay status unknown, threshold approaching | Not yet eligible, 13 days remaining + unresolved item |
+| BR-2026-010, 011 | Non-bailable, custody well below any threshold | No pathway identified (negative example — nothing over-triggers) |
+| BR-2026-005 | NDPS | Requires Judicial Review |
+| BR-2026-012 | NDPS **plus** a separate bailable charge — two simultaneous outcomes | Requires Judicial Review (special statute dominates the primary badge, bailable pathway still shown) |
+| BR-2026-019 | UAPA, heavy judicial factors | Requires Judicial Review |
+| BR-2026-020 | PMLA **plus** default-bail triggering simultaneously | Requires Judicial Review (two outcome cards) |
+| BR-2026-021 | POCSO | Requires Judicial Review |
+| BR-2026-022 | SC/ST Act | Requires Judicial Review |
+| BR-2026-023 | Multi-charge: one bailable + one non-bailable | Potentially Eligible (bailable charge governs) |
+| BR-2026-007 | Everything missing | Insufficient Information |
+| BR-2026-028 | Charges present, custody dates missing | Insufficient Information |
+| BR-2026-029 | Custody dates present, no charges recorded | Insufficient Information |
 
 ## Deployment
 

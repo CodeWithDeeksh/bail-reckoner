@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlmodel import Session
@@ -17,6 +17,7 @@ from sqlmodel import Session
 from . import auth, db
 from .demo_cases import DEMO_CASES
 from .models import Case, EligibilityResult
+from .i18n import SUPPORTED_LANGUAGES, localize_result
 from .rule_engine import RULE_ENGINE_VERSION, TOTAL_PATHWAYS_CHECKED, run_eligibility_analysis
 
 
@@ -127,7 +128,7 @@ def upsert_case(case_id: str, case: Case, user: auth.DemoUser = Depends(auth.req
 
 
 @app.post("/api/cases/{case_id}/analyze", response_model=EligibilityResult)
-def analyze_case(case_id: str, case: Case | None = None, user: auth.DemoUser = Depends(auth.require_user)):
+def analyze_case(case_id: str, case: Case | None = None, lang: str = Query("en"), user: auth.DemoUser = Depends(auth.require_user)):
     """
     Run the deterministic rule engine against a case. Requires an
     authenticated session (any role, including guest) — anonymous requests
@@ -161,16 +162,16 @@ def analyze_case(case_id: str, case: Case | None = None, user: auth.DemoUser = D
             input_snapshot=target.model_dump(mode="json"),
             result=result.model_dump(mode="json"),
         )
-        return result
+        return localize_result(result, lang if lang in SUPPORTED_LANGUAGES else "en")
 
 
 @app.get("/api/cases/{case_id}/result", response_model=EligibilityResult | None)
-def latest_result(case_id: str):
+def latest_result(case_id: str, lang: str = Query("en")):
     with Session(db.engine) as session:
         result = db.latest_result_for_case(session, case_id)
         if result is None:
             raise HTTPException(status_code=404, detail=f"No analysis found for case {case_id}")
-        return result
+        return localize_result(EligibilityResult.model_validate(result), lang if lang in SUPPORTED_LANGUAGES else "en")
 
 
 @app.get("/api/cases/{case_id}/audit-trail")

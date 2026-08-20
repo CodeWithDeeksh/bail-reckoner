@@ -1,3 +1,4 @@
+import { currentLanguage } from "../i18n/language";
 import type { Case, EligibilityResult } from "../types";
 
 // ============================================================
@@ -220,7 +221,7 @@ async function authedFetch(path: string, accessToken: string, init?: RequestInit
  */
 export async function analyzeCase(c: Case, accessToken: string): Promise<ApiResult<EligibilityResult>> {
   try {
-    const res = await authedFetch(`/api/cases/${encodeURIComponent(c.caseId)}/analyze`, accessToken, {
+    const res = await authedFetch(`/api/cases/${encodeURIComponent(c.caseId)}/analyze?lang=${currentLanguage()}`, accessToken, {
       method: "POST",
       body: JSON.stringify(caseToBackend(c)),
     });
@@ -270,7 +271,7 @@ export async function fetchCases(): Promise<ApiResult<Case[]>> {
 
 export async function fetchLatestResult(caseId: string): Promise<ApiResult<EligibilityResult>> {
   try {
-    const res = await fetch(`${API_BASE}/api/cases/${encodeURIComponent(caseId)}/result`);
+    const res = await fetch(`${API_BASE}/api/cases/${encodeURIComponent(caseId)}/result?lang=${currentLanguage()}`);
     if (res.status === 404) return { ok: false, error: "No analysis found for this case yet.", status: 404 };
     if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     return { ok: true, data: backendResultToFrontend(await res.json()) };
